@@ -22,5 +22,5 @@ two_point = GA.toolbox.register('custom_cx', two_point, cx_pb=0.9)
 
 # RUN THE OPTIMIZATION
 GA.start_GA(pop_size=10)
-GA.optimize(n_gen=100, elitism=True, sel=True,  cx=True, mut=True, mut_pb=0.7, custom_cx=two_point)
+GA.optimize( elitism=True, sel=True,  cx=True, mut=True, max_gen=30, max_evals=100, mut_pb=0.7, custom_cx=two_point)
 

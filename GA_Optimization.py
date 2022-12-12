@@ -55,11 +55,9 @@ class GA_Optimizer():
         # Mutation
         self.toolbox.register('mutate', tools.mutFlipBit, indpb=1) #Default
         self.toolbox.register('custom_mut', self.mut)
-
         # Selection
         self.toolbox.register('select_TS', tools.selTournament, tournsize=3) #Default
         self.toolbox.register('custom_sel', self.sel)
-
 
         ### Stats Collector ###
         self.stats = tools.Statistics(key=lambda ind: ind.fitness.values)
@@ -117,16 +115,18 @@ class GA_Optimizer():
             print(self.logbook.stream)
 
 
-    def optimize(self, n_gen, elitism=True, sel=True,  cx=True, mut=True, **kwargs):
+    def optimize(self, elitism=True, sel=True,  cx=True, mut=True, **kwargs):
         """
         Run the optimization.
         ...
-        :param n_gen(int): Maximum number of generations
         :param elitism(bool - Default:True): if True elitism is considered. False for not considering Elitism.
         :param sel(bool - Default:True): For using selection operator in the evolution loop
         :param cx(bool - Default:True): For using crossover operator in the evolution loop
         :param mut(bool - Default:True:) For using mutation operator in the evolution loop
         ...
+        :keyword **max_gen(int): Maximum number of generations for termination criteria.
+        :keyword **max_evals(int): Maximum number of fitness evaluations for termination criteria.
+            If both the criteria are set, the first reached stops the algorithm.
         :keyword **cx_pb (float): Crossover Probability. If not specified cx_pb=0.8.
             If a custom crossover operator is passed as **custom_cx, then cx_pb must be specified in the external
             function.
@@ -158,19 +158,22 @@ class GA_Optimizer():
         :return: logbook object.
         """
 
-        self.n_gen = n_gen
+        if 'max_evals' not in kwargs and 'max_gen' not in kwargs:
+            raise "Please Specify Termination Criteria by using 'max_evals', 'max_gen' or both."
 
+        self.n_evals = self.logbook[-1]['nevals']
+
+        # Setting mut_pb and cx_pb
         if 'mut_pb' in kwargs: self.mut_pb = kwargs['mut_pb']
         else: self.mut_pb=0.1
 
         if 'cx_pb' in kwargs: self.cx_pb = kwargs['cx_pb']
         else: self.cx_pb=0.8
 
-        # Start loop over generations
-        for g in range(2, n_gen+1):
-
-            if self.verbose:
-                print('starting generation number ', g)
+        g = 2
+        termination_criteria = False
+        # Start loop over termination criteria
+        while not termination_criteria:
 
             # Save Best Ind
             if elitism:
@@ -228,10 +231,22 @@ class GA_Optimizer():
             # Updating Log
             record = self.stats.compile(self.pop)
             self.logbook.record(gen=g, nevals=len(invalid_ind), **record, best= self.hof[0])
+            self.n_evals = self.n_evals + self.logbook[-1]['nevals']
+            g = g+1
             if self.verbose:
                 print(self.logbook.stream)
 
-            return self.logbook
+            # Check Termination Criteria
+            if 'max_evals' in kwargs and self.n_evals >= kwargs['max_evals']:
+                termination_criteria = True
+            if 'max_gen' in kwargs and g >= kwargs['max_gen']+1:
+                self.n_gen = g
+                termination_criteria = True
+            if 'max_evals' in kwargs and 'max_gen' in kwargs:
+                if self.n_evals >= kwargs['max_evals'] or g >= kwargs['max_gen']+1:
+                    termination_criteria = True
+
+        return self.logbook
 
 
 
