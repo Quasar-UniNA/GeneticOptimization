@@ -2,15 +2,16 @@ import random,math
 from qiskit import QuantumCircuit, QuantumRegister, execute, Aer, IBMQ, BasicAer
 from qiskit.test.mock import FakeSydney
 from qiskit.providers.aer.noise import NoiseModel, depolarizing_error
-from qiskit.providers.aer.noise import  ReadoutError
-
+from qiskit.providers.aer.noise import ReadoutError
+import copy
+from qiskit.providers.aer.backends import QasmSimulator
 #IBMQ.enable_account('64be1b8a0ab4152d84501676396527b41fc86f9f26807f800059e39cf35961b1127ef3be9190aae8058ba5d955fefadf3ee4663f305cdf5a3412b93dbf77464a')
 #IBMQ.save_account('64be1b8a0ab4152d84501676396527b41fc86f9f26807f800059e39cf35961b1127ef3be9190aae8058ba5d955fefadf3ee4663f305cdf5a3412b93dbf77464a', overwrite=True)
 #provider = IBMQ.get_provider(hub='ibm-q-research',group='uni-naples-feder-3', project='main')
 
 
 
-def generate_ind_from_count(final_pop, counts):
+def generate_ind_from_count(creator_ind, final_pop, counts):
     '''
     Function appending to final_pop the states in the counts vector as list of
     integers in the correct order.
@@ -25,7 +26,7 @@ def generate_ind_from_count(final_pop, counts):
         for b in range(len(state)):
             ind.append(int(state[-1-b]))
         for occurence in range(counts[state]):
-            final_pop.append(ind)
+            final_pop.append(creator_ind(ind))
 
 
 def compute_frequencies(ind_list):
@@ -73,34 +74,38 @@ def noise_model(prob_1=0.001, prob_2=0.01, p0given1=0.1, p1given0=0.05):
     return noise_model
 
 
-def qmo(pop, ind_size, cx_pb, m_pb, provider, backend_name, noise_model=None, draw_qc=False):
-    '''
-    Function implementing QMO operator.
-    :param pop: genetic population
-    :param ind_size: problem size
-    :param cx_pb: probability of crossover
-    :param m_pb: probability of mutation
-    :param provider: IBM provider
-    :param backend_name: IBM quantum circuit backend
-    :param noise_model: Noise Model - None by default
-    :param draw_qc: Show QMO quantum circuit if TRUE - False by default
-    :return: New Genetic Population
-    '''
-    pop_size = len(pop)
-    new_pop = []
+def qmo(pop, ind_size, cx_pb, m_pb, creator_ind, draw_qc=False, **kwargs):
+    """
+    Function implementing QMO operator. By default, QMO works simulating ideally the quantum circuit created.
+    QMO modifies in place pop.
+    ...
+    :param (int) pop: genetic population to mate;
+    :param (int) ind_size: problem size;
+    :param (float) cx_pb: probability of crossover;
+    :param (float) m_pb: probability of mutation;
+    :param (DEAP Creator) creator_ind: Individual Creator Object from Deap;
+    :param (Bool - default False) draw_qc: Show QMO quantum circuit if TRUE.
+    ...
+    :keyword **provider: IBMQ provider if real backands or IBMQ simulators have to be used;
+    :keyword **backend: IBMQ backend object;
+    :keyword **noise_model: Qiskit Noise Model Object. If specified, it will be considered in the simulation;
+    ...
+    :return:
+    """
+
     to_consider, to_not_consider = [],[]
     # if random < cx_pb then consider the individual for crossover
     for ind in pop:
         if random.random() < cx_pb:
+            del ind.fitness.values
             to_consider.append(ind)
+            pop.remove(ind)
 
-        else:
-            to_not_consider.append(ind)
+    # Build Quantum Circuit
     if len(to_consider)>0:
         rotations = compute_frequencies(to_consider)
-        #print(to_consider,rotations)
         for iteration in range(len(to_consider)):
-            qr= QuantumRegister(ind_size)
+            qr = QuantumRegister(ind_size)
             qc = QuantumCircuit(qr)
             for bit in range(ind_size):
                 #print('bit', bit)
@@ -112,33 +117,27 @@ def qmo(pop, ind_size, cx_pb, m_pb, provider, backend_name, noise_model=None, dr
             if draw_qc:
                 qc.draw('mpl').show()
 
-            #execute qc
-            if backend_name == 'fake':
-                backend = BasicAer.get_backend('qasm_simulator')
-                if noise_model != None:
-                    job = execute(qc, backend, noise_model=noise_model, shots=1, seed_simulator=random.randint(1, 150))
-
+            # Execute qc
+            if 'backend' not in kwargs:
+                # QASM SIMULATOR
+                backend = Aer.get_backend('qasm_simulator')
+                if 'noise_model' in kwargs:
+                    job = execute(qc, backend, noise_model=kwargs['noise_model'], shots=1, seed_simulator=random.randint(1, 150))
                 else:
                     job = execute(qc, backend, shots=1, seed_simulator=random.randint(1, 150))
                 result = job.result()
                 counts = result.get_counts()
 
-            if backend_name == 'fake_sydney':
-                backend = provider.get_backend('ibmq_qasm_simulator')
-                noisy_backend = FakeSydney()
-                noise_model = NoiseModel.from_backend(noisy_backend)
-                job = execute(qc, backend, shots=1, seed_simulator=random.randint(1, 150), noise_model=noise_model)
-                result = job.result()
-                counts = result.get_counts()
+            # CUSTOM BACKEND
             else:
-                backend = provider.get_backend(backend_name)
-                job = execute(qc, backend, shots=1, seed_simulator=random.randint(1, 150))
+                if 'noise_model' in kwargs:
+                    job = execute(qc, kwargs['backend'], noise_model=kwargs['noise_model'], shots=1,
+                                  seed_simulator=random.randint(1, 150))
+                else:
+                    job = execute(qc, kwargs['backend'], shots=1, seed_simulator=random.randint(1, 150))
                 result = job.result()
                 counts = result.get_counts()
 
-            generate_ind_from_count(new_pop, counts)
+            generate_ind_from_count(creator_ind, pop, counts)
 
-    for ind in to_not_consider:
-        new_pop.append(ind)
 
-    return new_pop

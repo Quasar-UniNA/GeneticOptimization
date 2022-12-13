@@ -189,11 +189,10 @@ class GA_Optimizer():
             else:
                 offspring = self.pop
             offspring = list(map(self.toolbox.clone, offspring))
-
             # Genetic Crossover
             if cx:
                 if 'custom_cx' in kwargs:
-                    self.toolbox.custom_cx(self.pop)
+                    self.toolbox.custom_cx(offspring)
 
                 else:
                     for child1, child2 in zip(offspring[::2], offspring[1::2]):
@@ -211,7 +210,6 @@ class GA_Optimizer():
                         if random.random() < self.mut_pb:
                             self.toolbox.mutate(mutant)
                             del mutant.fitness.values
-
             # Evaluate the new individuals in the population
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
             fitness = list(map(self.toolbox.evaluate, invalid_ind))
