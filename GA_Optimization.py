@@ -1,5 +1,5 @@
 import copy
-
+import pandas as pd
 import numpy,random
 from deap import base, creator, tools
 from Problems.knapsack_problem import knapsack
@@ -246,9 +246,14 @@ class GA_Optimizer():
 
         return self.logbook
 
-
-
-
+    def save_log_to_csv(self, filename=None):
+        """
+        Save Ga Loogbok to CSV file.
+        ...
+        :param (str) filename: path and name of csv file.
+        """
+        self.df = pd.DataFrame.from_records(self.logbook)
+        self.df.to_csv(filename, index=False)
 
 
 
