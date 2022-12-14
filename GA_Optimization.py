@@ -247,7 +247,7 @@ class GA_Optimizer():
         return self.logbook
 
 
-
+   
 
 
 
