@@ -21,8 +21,8 @@ def quantum_mating(offspring, cx_pb, mut_pb, prob_1=0.001, prob_2=0.01, p0given1
 # INITIALIZING GA_OPTIMIZER
 GA = GA_Optimizer(problem_size=knapsack_size,  verbose=True)
 GA.set_Fitness_Function(kn.evaluate)
-quantum_mating = GA.toolbox.register('custom_cx', quantum_mating, cx_pb=0.8, mut_pb=0.5)
+q_mating = GA.toolbox.register('custom_cx', quantum_mating, cx_pb=0.8, mut_pb=0.5)
 
 # RUN THE OPTIMIZATION
 GA.start_GA(pop_size=10)
-GA.optimize(elitism=True, sel=True,  cx=True, mut=False, max_gen=20, max_evals=1000, custom_cx=quantum_mating)
+GA.optimize(elitism=True, sel=True,  cx=True, mut=False, max_gen=20, max_evals=1000, custom_cx=q_mating)
