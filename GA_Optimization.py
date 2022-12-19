@@ -183,7 +183,7 @@ class GA_Optimizer():
             # Genetic Selection
             if sel:
                 if 'custom_sel' in kwargs:
-                    offspring = self.toolbox.custom_sel(self.pop, k=self.pop_size)
+                    offspring = self.toolbox.custom_sel(self.pop)
                 else:
                     offspring = self.toolbox.select_TS(self.pop, k=self.pop_size)
             else:
