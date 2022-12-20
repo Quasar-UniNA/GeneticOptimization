@@ -79,11 +79,12 @@ def noise_model(prob_1=0.001, prob_2=0.01, p0given1=0.1, p1given0=0.05):
 def qmo(pop, ind_size, cx_pb, m_pb, creator_ind, draw_qc=False, **kwargs):
     """
     Function implementing QMO operator. By default, QMO works simulating ideally the quantum circuit created.
+    Real quantum devices from IBM Quantum can be used specifying the backend argument.
     QMO modifies in place pop.
     QMO can be distributed according the D-NISQ reference model, by specifying the sub problems size with size_sub_prob
     parameter. It will create several quantum circuits with size at maximum equals to size_sub_prob.
     ...
-    :param (int) pop: genetic population to mate;
+    :param (list) pop: genetic population to mate;
     :param (int) ind_size: problem size;
     :param (float) cx_pb: probability of crossover;
     :param (float) m_pb: probability of mutation;
