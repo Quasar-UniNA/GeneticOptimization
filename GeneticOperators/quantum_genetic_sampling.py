@@ -8,15 +8,20 @@ def qgs(pop, toolbox, creator_ind, t, beta, iterations, draw_circuit=False, **kw
     """
     Function implementing QGS operator. By default, QGS works simulating ideally the quantum circuit created.
     Real quantum devices from IBM Quantum can be used specifying the backend argument.
+
+    NB: By default the generated mating pool contains a set of individuals with no associate fitness. Also if they were
+    already in the initial population, the fitness value goes lost. Fitness values from the original population can be
+    preserved by setting 'fitness_check=True'.
     ...
     :param (list) pop: genetic population from which select the mating pool;
     :param (DEAP Toolbox) toolbox: DEAP toolbox related to a GA object;
     :param (DEAP Creator Method) creator_ind: DEAP individual creator object related to a GA object;
     :param (int) t: Number of individuals to amplify;
     :param (float) beta: progressive angle for adaptive amplitude amplification;
-    :param (int) iterations: Grover's Oracle iterations in the quantum circuit;
+    :param (int) iterations: number of Grover's Oracle iterations in the quantum circuit;
     :param (bool - False Default) draw_circuit: True for plotting the created quantum circuit.
     ...
+    :keyword (bool) **fitness_check: True for retrive fitness values from original population;
     :keyword **provider: IBMQ provider if real backands or IBMQ simulators have to be used;
     :keyword **backend: IBMQ backend object;
     :keyword **noise_model: Qiskit Noise Model Object. If specified, it will be considered in the simulation;
@@ -79,6 +84,11 @@ def qgs(pop, toolbox, creator_ind, t, beta, iterations, draw_circuit=False, **kw
     if draw_circuit:
         qc.draw(output='mpl').show()
     off = create_offspring(creator_ind, counts)
+    if 'fitness_check' in kwargs:
+        for ind in off:
+            for p in pop:
+                if ind == p: ind.fitness = p.fitness
+
     return off
 
 
