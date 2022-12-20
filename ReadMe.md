@@ -17,6 +17,10 @@ The repo is organized as follows:
   - quantum_mating_operator.py implements the QMO algorithm presented in <i> Acampora, Giovanni, Roberto Schiattarella,
    and Autilia Vitiello. "Quantum Mating Operator: A New Approach to Evolve Chromosomes in Genetic Algorithms." 
    2022 IEEE Congress on Evolutionary Computation (CEC). IEEE, 2022. </i>
+  - quantum_genetic_sampling.py implements the QGS algorithm presented in <i> Acampora, Giovanni, Roberto Schiattarella, 
+   and Autilia Vitiello. "Using quantum amplitude amplification in genetic algorithms." Expert Systems with Applications 
+   209 (2022): 118203. </i>
+
 
 ## Usage
 
